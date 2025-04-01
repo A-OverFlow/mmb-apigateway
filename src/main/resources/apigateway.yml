@@ -1,0 +1,32 @@
+server:
+  port: 80
+
+spring:
+  application:
+    name: mmb-apigateway
+  main:
+    web-application-type: reactive
+  cloud:
+    discovery:
+      enabled: true
+    config:
+      enabled: false
+    gateway:
+      routes:
+        - id: mmb-frontend
+          uri: http://frontend-service:80
+          predicates:
+             - Path=/**
+#        - id: member-service
+#          uri: lb://member-service
+#          predicates:
+#            - Path=/api/v1/member/**
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    serviceUrl:
+      defaultZone: http://eureka-server:8761/eureka/
+  instance:
+    prefer-ip-address: true
+    hostname: eureka-server
