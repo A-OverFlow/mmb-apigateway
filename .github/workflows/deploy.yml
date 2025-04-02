@@ -32,11 +32,12 @@ jobs:
           EC2_USER: ${{ secrets.EC2_USER }}
           DOCKER_IMAGE: ${{ secrets.DOCKER_USERNAME }}/mmb-apigateway:latest
         run: |
-          echo "${{ secrets.EC2_KEY }}" > /tmp/key.pem
-          chmod 400 /tmp/key.pem
-          ssh -o StrictHostKeyChecking=no -i /tmp/key.pem EC2_USER@EC2_HOST << 'EOF'
+          echo $EC2_KEY  > /tmp/hlkim-testkey.pem
+          chmod 400 /tmp/hlkim-testkey.pem
+          ssh -o StrictHostKeyChecking=no -i /tmp/hlkim-testkey.pem $EC2_USER@$EC2_HOST << EOF
             docker pull $DOCKER_IMAGE
-            docker stop api-gateway || true
-            docker rm api-gateway || true
-            docker run -d --name api-gateway -p 80:80 $DOCKER_IMAGE
           EOF
+#            docker stop api-gateway || true
+#            docker rm api-gateway || true
+#            docker run -d --name api-gateway -p 80:80 $DOCKER_IMAGE
+#          EOF
