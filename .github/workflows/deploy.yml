@@ -35,7 +35,7 @@ jobs:
 
       - name: Push Docker image
         run: |
-          docker push ${{ secrets.DOCKER_USERNAME }}/mmb-apigateway:latest
+          docker push hlkim266/mmb-apigateway:latest
 
       - name: Deploy on EC2
         env:
