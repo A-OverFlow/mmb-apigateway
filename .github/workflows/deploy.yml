@@ -30,6 +30,9 @@ jobs:
         run: |
           docker build -t ${{ secrets.DOCKER_USERNAME }}/mmb-apigateway:latest .
 
+      - name: Print Docker info
+        run: docker info
+
       - name: Push Docker image
         run: |
           docker push ${{ secrets.DOCKER_USERNAME }}/mmb-apigateway:latest
