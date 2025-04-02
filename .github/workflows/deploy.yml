@@ -24,14 +24,11 @@ jobs:
 
       - name: Log in to Docker Hub
         run: |
-          echo "${{ secrets.DOCKER_PASSWORD }}" | sudo docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
       - name: Build Docker image
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/mmb-apigateway:latest .
-
-      - name: Print Docker info
-        run: docker info
+          docker build --no-cache -t ${{ secrets.DOCKER_USERNAME }}/mmb-apigateway:latest .
 
       - name: Push Docker image
         run: |
@@ -44,7 +41,7 @@ jobs:
           EC2_USER: ${{ secrets.EC2_USER }}
           DOCKER_IMAGE: ${{ secrets.DOCKER_USERNAME }}/mmb-apigateway:latest
         run: |
-          echo $EC2_KEY  > /tmp/hlkim-testkey.pem
+          echo "${EC2_KEY}"  > /tmp/hlkim-testkey.pem
           chmod 400 /tmp/hlkim-testkey.pem
           ssh -o StrictHostKeyChecking=no -i /tmp/hlkim-testkey.pem $EC2_USER@$EC2_HOST << EOF
             docker pull $DOCKER_IMAGE
