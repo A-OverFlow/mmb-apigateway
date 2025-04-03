@@ -28,11 +28,11 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build --no-cache -t ${{ secrets.DOCKER_USERNAME }}/mmb-apigateway:latest .
+          docker build --no-cache -t "${{ secrets.DOCKER_USERNAME }}/mmb-apigateway:latest" .
 
       - name: Push Docker image
         run: |
-          docker push ${{ secrets.DOCKER_USERNAME }}/mmb-apigateway:latest
+          docker push "${{ secrets.DOCKER_USERNAME }}/mmb-apigateway:latest"
 
       - name: Deploy on EC2
         env:
