@@ -32,7 +32,7 @@ jobs:
 
       - name: Push Docker image
         run: |
-          docker push hlkim266/mmb-apigateway:latest
+          docker push ${{ secrets.DOCKER_USERNAME }}/mmb-apigateway:latest
 
       - name: Deploy on EC2
         env:
@@ -45,6 +45,9 @@ jobs:
           chmod 400 /tmp/hlkim-testkey.pem
           ssh -o StrictHostKeyChecking=no -i /tmp/hlkim-testkey.pem $EC2_USER@$EC2_HOST << EOF
             docker pull $DOCKER_IMAGE
+#            docker compose ..
+#            cd /docker-compose.yml 있는 디렉토리 이동
+#            docker-compose pull
           EOF
 #            docker stop api-gateway || true
 #            docker rm api-gateway || true
