@@ -1,0 +1,27 @@
+server:
+  port: 8443
+  ssl:
+    enabled: true
+    certificate: /etc/letsencrypt/live/mumulbo.com/fullchain.pem
+    certificate-private-key: /etc/letsencrypt/live/mumulbo.com/privkey.pem
+
+spring:
+  cloud:
+    discovery:
+      enabled: false
+    config:
+      enabled: false
+    gateway:
+      routes:
+        - id: mmb-member-service
+          uri: http://member-service:8082       # container name (member-service)
+          predicates:
+            - Path=/api/v1/member, /api/v1/member/**
+
+        - id: mmb-frontend
+          uri: http://frontend-service:80
+          predicates:
+            - Host=mumulbo.com
+            - Path=/, /**
+          filters:
+            - RewritePath=/(?<segment>.*), /${segment}

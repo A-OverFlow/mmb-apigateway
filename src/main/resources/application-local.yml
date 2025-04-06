@@ -1,0 +1,36 @@
+server:
+  port: 8080
+  ssl:
+    enabled: false
+
+spring:
+  cloud:
+    discovery:
+      enabled: false
+    config:
+      enabled: false
+    gateway:
+      routes:
+        #        - id: mmb-question-service
+        #          uri: http://question-service:8081     # container name (question-service)
+        #          predicates:
+        #            - Path=/api/v1/login, /api/v1/login/**
+
+        - id: mmb-grafana
+          uri: http://52.78.231.247:3000
+          predicates:
+            - Path=/grafana, /grafana/**
+          filters:
+            - RewritePath=/grafana/(?<segment>.*), /${segment}
+
+        - id: mmb-member-service
+          uri: http://member-service:8082       # container name (member-service)
+          predicates:
+            - Path=/api/v1/member, /api/v1/member/**
+
+        - id: mmb-frontend
+          uri: http://frontend-service:80
+          predicates:
+            - Path=/, /**
+          filters:
+            - RewritePath=/(?<segment>.*), /${segment}

@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: mmb-apigateway
+  main:
+    web-application-type: reactive
+
+eureka:
+  client:
+    enabled: false
+    register-with-eureka: false
+    fetch-registry: false
+    serviceUrl:
+      defaultZone: ""
+  instance:
+    prefer-ip-address: false
