@@ -1,5 +1,5 @@
 server:
-  port: 8443
+  port: 443
   ssl:
     enabled: true
     certificate: /etc/letsencrypt/live/mumulbo.com/fullchain.pem
