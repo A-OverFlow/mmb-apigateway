@@ -13,10 +13,6 @@ spring:
       enabled: false
     gateway:
       routes:
-        #        - id: mmb-question-service
-        #          uri: http://question-service:8081     # container name (question-service)
-        #          predicates:
-        #            - Path=/api/v1/login, /api/v1/login/**
         - id: mmb-grafana
           uri: http://52.78.231.247:3000
           predicates:
@@ -24,11 +20,20 @@ spring:
           filters:
             - RewritePath=/grafana/(?<segment>.*), /${segment}
 
-        - id: mmb-member-service
-          uri: http://member-service:8082
+        - id: mmb-question-service
+          uri: http://question-service:8081     # container name (question-service)
           predicates:
             - Host=dev.mumulbo.com
-            - Path=/api/v1/member, /api/v1/member/**
+            - Path=/api/v1/questions, /api/v1/questions/**
+
+        - id: mmb-member-service
+          uri: http://member-service:8082       # container name (member-service)
+          predicates:
+            - Host=dev.mumulbo.com
+            - Path=/api/v1/members
+            - Path=/api/v1/members/**
+            - Path=/api/v1/auth/
+            - Path=/api/v1/auth/**
 
         - id: dev-mmb-frontend
           uri: http://frontend-service:80
