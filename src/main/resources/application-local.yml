@@ -12,7 +12,7 @@ spring:
     gateway:
       routes:
         - id: mmb-grafana
-          uri: http://52.78.231.247:3000
+          uri: http://grafana:3000
           predicates:
             - Path=/grafana, /grafana/**
           filters:
@@ -32,7 +32,7 @@ spring:
             - Path=/api/v1/auth/**
 
         - id: mmb-frontend
-          uri: http://frontend-service:80
+          uri: http://mmb-frontend:80
           predicates:
             - Path=/, /**
           filters:
