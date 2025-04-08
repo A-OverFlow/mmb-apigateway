@@ -39,6 +39,6 @@ spring:
           uri: http://mmb-frontend:80
           predicates:
             - Host=dev.mumulbo.com
-            - Path=/, /**
+            - Path=/**
           filters:
-            - RewritePath=/(?<segment>.*), /${segment}
+            - StripPrefix=0
