@@ -3,7 +3,7 @@ name: Deploy API Gateway on EC2
 on:
   push:
     branches:
-      - main  # main 브랜치에 push 될 때 실행
+      - dev  # dev test
 
 jobs:
   build-and-deploy:
