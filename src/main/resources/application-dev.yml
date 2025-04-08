@@ -12,6 +12,7 @@ spring:
     config:
       enabled: false
     gateway:
+      preserveHostHeader: false
       routes:
         - id: mmb-grafana
           uri: http://grafana:3000
@@ -41,4 +42,4 @@ spring:
             - Host=dev.mumulbo.com
             - Path=/**
           filters:
-            - StripPrefix=0
+            - RewritePath=/(?<segment>.*), /${segment}
