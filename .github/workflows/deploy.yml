@@ -3,7 +3,7 @@ name: Deploy API Gateway on EC2
 on:
   push:
     branches:
-      - dev  # dev test
+      - main  # main test
 
 jobs:
   build-and-deploy:
