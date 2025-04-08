@@ -1,0 +1,44 @@
+server:
+  port: 8443
+  ssl:
+    enabled: true
+    certificate: /etc/letsencrypt/live/dev.mumulbo.com/fullchain.pem
+    certificate-private-key: /etc/letsencrypt/live/dev.mumulbo.com/privkey.pem
+
+spring:
+  cloud:
+    discovery:
+      enabled: false
+    config:
+      enabled: false
+    gateway:
+      routes:
+        - id: mmb-grafana
+          uri: http://grafana:3000
+          predicates:
+            - Path=/grafana, /grafana/**
+          filters:
+            - RewritePath=/grafana/(?<segment>.*), /${segment}
+
+        - id: mmb-question-service
+          uri: http://question-service:9081     # container name (question-service)
+          predicates:
+            - Host=dev.mumulbo.com
+            - Path=/api/v1/questions, /api/v1/questions/**
+
+        - id: mmb-member-service
+          uri: http://member-service:9082       # container name (member-service)
+          predicates:
+            - Host=dev.mumulbo.com
+            - Path=/api/v1/members
+            - Path=/api/v1/members/**
+            - Path=/api/v1/auth/
+            - Path=/api/v1/auth/**
+
+        - id: dev-mmb-frontend
+          uri: http://mmb-frontend:80
+          predicates:
+            - Host=dev.mumulbo.com
+            - Path=/, /**
+          filters:
+            - RewritePath=/(?<segment>.*), /${segment}
