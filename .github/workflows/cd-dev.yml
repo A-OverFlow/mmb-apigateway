@@ -22,7 +22,7 @@ jobs:
           distribution: 'temurin'
 
       - name: Build Docker image
-        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/apigateway:dev .
+        run: docker build -t mumulbo/apigateway:dev .
 
       - name: Push Docker image to Docker Hub
         env:
@@ -30,7 +30,7 @@ jobs:
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
         run: |
           echo "${DOCKER_PASSWORD}" | docker login -u "${DOCKER_USERNAME}" --password-stdin
-          docker push ${{ secrets.DOCKER_USERNAME }}/apigateway:dev
+          docker push mumulbo/apigateway:dev
 
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v0.1.8
@@ -39,7 +39,7 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_KEY }}
           script: |
-            docker pull ${{ secrets.DOCKER_USERNAME }}/apigateway:dev
+            docker pull mumulbo/apigateway:dev
 #           apigateway 컨테이너 1개만 docker compose up 으로 변경필요
 #            docker stop apigateway-dev || true
 #            docker rm apigateway-dev || true
