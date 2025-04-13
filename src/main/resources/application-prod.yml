@@ -16,6 +16,7 @@ spring:
     config:
       enabled: false
     gateway:
+      preserveHostHeader: false
       routes:
         - id: mmb-grafana
           uri: http://grafana:3000
@@ -27,11 +28,13 @@ spring:
         - id: mmb-question-service
           uri: http://question-service:8081     # container name (question-service)
           predicates:
+            - Host=mumulbo.com
             - Path=/api/v1/questions, /api/v1/questions/**
 
         - id: mmb-member-service
           uri: http://member-service:8082       # container name (member-service)
           predicates:
+            - Host=mumulbo.com
             - Path=/api/v1/members
             - Path=/api/v1/members/**
             - Path=/api/v1/auth/
