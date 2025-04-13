@@ -5,6 +5,10 @@ server:
     certificate: /etc/letsencrypt/live/dev.mumulbo.com/fullchain.pem
     certificate-private-key: /etc/letsencrypt/live/dev.mumulbo.com/privkey.pem
 
+logging:
+  level:
+    com.mumulbo.gateway.filter: debug
+
 spring:
   cloud:
     discovery:
