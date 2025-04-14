@@ -45,13 +45,6 @@ spring:
             - Path=/api/v1/members
             - Path=/api/v1/members/**
 
-        - id: mmb-auth-service
-          uri: http://auth-service:${AUTH_SERVICE_PORT}
-          predicates:
-            - Path=/api/v1/auth/**
-            - Path=/api/v1/oauth2/**
-            - Path=/login/oauth2/**
-
         - id: dev-mmb-frontend
           uri: http://mmb-frontend:80
           predicates:
