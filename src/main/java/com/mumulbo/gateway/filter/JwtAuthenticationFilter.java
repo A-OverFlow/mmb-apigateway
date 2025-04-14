@@ -1,7 +1,6 @@
 package com.mumulbo.gateway.filter;
 
 import com.mumulbo.gateway.util.JwtUtil;
-import io.jsonwebtoken.Claims;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
@@ -10,10 +9,9 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
-import org.springframework.http.server.reactive.ServerHttpRequest;
 import reactor.core.publisher.Mono;
-import org.springframework.cloud.gateway.route.Route;
-import org.springframework.cloud.gateway.support.ServerWebExchangeUtils;
+
+import java.util.List;
 
 @Component
 public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
@@ -30,21 +28,17 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
         String path = exchange.getRequest().getPath().toString();
 
         // 필터 제외
-        if (path.startsWith("/api/v1/auth") ||
-                path.equals("/") ||
-                path.startsWith("/static") ||
-                path.endsWith(".js") ||
-                path.endsWith(".css") ||
-                path.endsWith(".ico") ||
-                path.endsWith(".html")) {
-            return chain.filter(exchange).doOnSuccess(aVoid -> {
-                Route route = exchange.getAttribute(ServerWebExchangeUtils.GATEWAY_ROUTE_ATTR);
-                if (route != null) {
-                    System.out.println(">> 라우트 ID: " + route.getId());
-                } else {
-                    System.out.println(">> 라우트 매칭 실패 ❌");
-                }
-            });
+        if (isPublicPath(path)) {
+            return chain.filter(exchange);
+        }
+
+        // X- header 외부 접근 차단
+        for (String header : List.of("X-User-Id", "X-User-Name", "X-User-Email", "X-User-Username")) {
+            if (exchange.getRequest().getHeaders().containsKey(header)) {
+                System.out.println("🚨 외부 요청에 금지된 헤더 포함됨: " + header);
+                exchange.getResponse().setStatusCode(HttpStatus.FORBIDDEN);
+                return exchange.getResponse().setComplete();
+            }
         }
 
         // 토큰 확인
@@ -56,26 +50,27 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
 
         String token = authHeader.substring(7);
 
-        // todo
         try {
-            Claims claims = jwtUtil.validateToken(token);
-            String name = claims.get("name", String.class);
-            String email = claims.get("email", String.class);
-            String username = claims.get("username", String.class);
-
-            ServerHttpRequest newRequest = exchange.getRequest().mutate()
-                    .header("X-User-Name", name)
-                    .header("X-User-Email", email)
-                    .header("X-User-Username", username)
-                    .build();
-
-            return chain.filter(exchange.mutate().request(newRequest).build());
+            jwtUtil.validateToken(token);
+            return chain.filter(exchange);
 
         } catch (Exception e) {
-            System.out.println(">> 못가져옴 : " + e.getMessage());
             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
             return exchange.getResponse().setComplete();
         }
+    }
+
+    private boolean isPublicPath(String path) {
+        return path.startsWith("/api/v1/auth") ||
+                path.startsWith("/api/v1/oauth2") ||
+                path.startsWith("/login/oauth2/code") ||
+                path.startsWith("/grafana") ||
+                path.equals("/") ||
+                path.startsWith("/static") ||
+                path.endsWith(".js") ||
+                path.endsWith(".css") ||
+                path.endsWith(".ico") ||
+                path.endsWith(".html");
     }
 
     @Override
@@ -83,3 +78,4 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
         return 10;
     }
 }
+
