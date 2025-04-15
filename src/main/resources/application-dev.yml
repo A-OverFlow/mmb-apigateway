@@ -25,7 +25,7 @@ spring:
       preserveHostHeader: false
       routes:
         - id: mmb-grafana
-          uri: http://mmb-grafana:3000
+          uri: http://mmb-grafana:3000/login
           predicates:
             - Path=/grafana/**
           filters:
