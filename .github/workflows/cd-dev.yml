@@ -46,7 +46,7 @@ jobs:
             echo "==== DOCKER PULL ===="
             docker pull mumulbo/apigateway:dev
             cd /home/ec2-user/infra
-            docker-compose --env-file .env.dev up -d --no-deps --force-recreate apigateway
+            docker-compose --env-file .env.dev up -d --no-deps --force-recreate mmb-apigateway
 #            docker pull mumulbo/apigateway:dev
 #           apigateway 컨테이너 1개만 docker compose up 으로 변경필요
 #            docker stop apigateway-dev || true
