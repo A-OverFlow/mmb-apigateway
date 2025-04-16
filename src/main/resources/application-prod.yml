@@ -1,9 +1,15 @@
 server:
-  port: 443
+  port: ${APPLICATION_PORT}
   ssl:
     enabled: true
     certificate: /etc/letsencrypt/live/mumulbo.com/fullchain.pem
     certificate-private-key: /etc/letsencrypt/live/mumulbo.com/privkey.pem
+  http2:
+    enabled: false
+    max-http-request-header-size: 65536
+
+jwt:
+  secret: ${JWT_SECRET_KEY}
 
 logging:
   level:
@@ -19,31 +25,38 @@ spring:
       preserveHostHeader: false
       routes:
         - id: mmb-grafana
-          uri: http://grafana:3000
+          uri: http://mmb-grafana:3000/login
           predicates:
-            - Path=/grafana, /grafana/**
+            - Path=/grafana/**
           filters:
             - RewritePath=/grafana/(?<segment>.*), /${segment}
 
         - id: mmb-question-service
-          uri: http://question-service:8081     # container name (question-service)
+          uri: http://mmb-question-service:${QUESTION_SERVICE_PORT}      # container name (mmb-question-service)
           predicates:
             - Host=mumulbo.com
-            - Path=/api/v1/questions, /api/v1/questions/**
+            - Path=/api/v1/questions
+            - Path=/api/v1/questions/**
 
         - id: mmb-member-service
-          uri: http://member-service:8082       # container name (member-service)
+          uri: http://mmb-member-service:${MEMBER_SERVICE_PORT}       # container name (mmb-member-service)
           predicates:
             - Host=mumulbo.com
             - Path=/api/v1/members
             - Path=/api/v1/members/**
-            - Path=/api/v1/auth/
+
+        - id: mmb-auth-service
+          uri: http://mmb-auth-service:${AUTH_SERVICE_PORT}
+          predicates:
+            - Host=mumulbo.com
             - Path=/api/v1/auth/**
+            - Path=/api/v1/oauth2/**
+            - Path=/login/oauth2/**
 
         - id: mmb-frontend
           uri: http://mmb-frontend:80
           predicates:
             - Host=mumulbo.com
-            - Path=/, /**
+            - Path=/**
           filters:
             - RewritePath=/(?<segment>.*), /${segment}
