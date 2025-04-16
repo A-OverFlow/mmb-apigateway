@@ -1,9 +1,5 @@
 server:
-  port: ${APPLICATION_PORT}
-  ssl:
-    enabled: true
-    certificate: /etc/letsencrypt/live/dev.mumulbo.com/fullchain.pem
-    certificate-private-key: /etc/letsencrypt/live/dev.mumulbo.com/privkey.pem
+  port: ${APIGATEWAY_PORT}
   http2:
     enabled: false
     max-http-request-header-size: 65536
@@ -53,10 +49,3 @@ spring:
             - Path=/api/v1/oauth2/**
             - Path=/login/oauth2/**
 
-        - id: dev-mmb-frontend
-          uri: http://mmb-frontend:80
-          predicates:
-            - Host=dev.mumulbo.com
-            - Path=/**
-          filters:
-            - RewritePath=/(?<segment>.*), /${segment}
