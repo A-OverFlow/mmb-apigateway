@@ -1,0 +1,6 @@
+services:
+  api-gateway:
+    build:
+      context: ./
+    image:  mumulbo/mmb-apigateway:local
+    container_name: mmb-apigateway

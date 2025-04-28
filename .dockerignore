@@ -1,0 +1,28 @@
+# 빌드 아티팩트
+/build
+/.gradle
+/target
+/out
+
+# IDE 설정 파일
+*.iml
+.idea
+.vscode
+
+# OS별 파일
+.DS_Store
+Thumbs.db
+
+# Git 관련
+.git
+.gitignore
+
+# 기타 불필요한 파일
+*.log
+*.class
+*.jar
+
+# 테스트 리포트, 커버리지
+/test-output
+/coverage
+/jacoco-report

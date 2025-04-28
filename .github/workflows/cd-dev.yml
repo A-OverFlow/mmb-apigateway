@@ -5,50 +5,78 @@ on:
     types: [closed]
     branches:
       - dev
+  push:
+    branches: [ feature/add-docker-compose ]
 
 jobs:
   deploy:
-    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
+    environment: dev
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up JDK 21
-        uses: actions/setup-java@v3
-        with:
-          java-version: '21'
-          distribution: 'temurin'
+      - name: Docker Buildx 설정 (멀티 플랫폼 빌드를 위해 사용)
+        uses: docker/setup-buildx-action@v3
 
-      - name: Build Docker image
-        run: docker build -t mumulbo/apigateway:dev .
-
-      - name: Push Docker image to Docker Hub
-        env:
-          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      - name: EC2 접속을 위한 SSH 키 설정
         run: |
-          echo "${DOCKER_PASSWORD}" | docker login -u "${DOCKER_USERNAME}" --password-stdin
-          docker push mumulbo/apigateway:dev
+          mkdir -p ~/.ssh                                         # .ssh 디렉터리 생성
+          echo "${{ secrets.DEV_EC2_KEY }}" > ~/.ssh/ec2.pem      # 비밀키 파일 생성
+          chmod 600 ~/.ssh/ec2.pem                                # 비밀키 파일 권한 설정
 
-      - name: Deploy to EC2
-        uses: appleboy/ssh-action@v0.1.8
+      - name: 저장소 이름 및 배포 디렉토리 변수 설정
+        id: vars
+        run: |
+          echo "REPO_NAME=${GITHUB_REPOSITORY##*/}" >> $GITHUB_OUTPUT 
+          echo "DEPLOY_DIR=${{ secrets.DEV_DEPLOY_PATH }}/${GITHUB_REPOSITORY##*/}" >> $GITHUB_OUTPUT 
+
+      - name: Docker Hub 로그인
+        uses: docker/login-action@v3
         with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_KEY }}
-          script: |
-            echo "==== NETWORK TEST ===="
-            ping -c 3 google.com || true
-            nslookup registry-1.docker.io || true
-            curl -s https://registry-1.docker.io/v2/ || true
-            echo "==== DOCKER PULL ===="
-            docker pull mumulbo/apigateway:dev
-            cd /home/ec2-user/infra
-            docker-compose --env-file .env.dev up -d --no-deps --force-recreate mmb-apigateway
-#            docker pull mumulbo/apigateway:dev
-#           apigateway 컨테이너 1개만 docker compose up 으로 변경필요
-#            docker stop apigateway-dev || true
-#            docker rm apigateway-dev || true
-#            docker run -d --name apigateway-dev -p 9082:9082 ${{ secrets.DOCKER_USERNAME }}/apigateway:dev
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Docker 이미지 빌드 후 Docker Hub에 푸시
+        uses: docker/build-push-action@v5
+        with:
+          context: .               # 빌드 컨텍스트 (현재 디렉토리)
+          file: Dockerfile          # 사용할 Dockerfile
+          push: true                # 빌드 후 이미지 푸시
+          tags: mumulbo/mmb-apigateway:dev  # 이미지 태그 설정
+
+      - name: EC2 서버에 배포 디렉토리 생성
+        run: |
+          ssh -i ~/.ssh/ec2.pem -o StrictHostKeyChecking=no ${{ secrets.DEV_EC2_HOST }} \
+          "mkdir -p ${{ steps.vars.outputs.DEPLOY_DIR }}"
+
+      - name: docker-compose.yml 파일 EC2 서버로 복사
+        run: |
+          scp -i ~/.ssh/ec2.pem -o StrictHostKeyChecking=no docker-compose.yml \
+          ${{ secrets.DEV_EC2_HOST }}:${{ steps.vars.outputs.DEPLOY_DIR }}/docker-compose.yml
+
+      - name: 배포에 필요한 .env 파일 생성
+        run: |
+          echo "APIGATEWAY_PORT=${{ vars.APIGATEWAY_PORT }}" > .env
+          echo "APIGATEWAY_NAME=${{ vars.APIGATEWAY_NAME }}" >> .env
+          echo "JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}" >> .env
+          echo "HOST_DOMAIN=${{ vars.HOST_DOMAIN }}" >> .env
+          echo "QUESTION_SERVICE_PORT=${{ vars.QUESTION_SERVICE_PORT }}" >> .env
+          echo "MEMBER_SERVICE_PORT=${{ secrets.MEMBER_SERVICE_PORT }}" >> .env
+          echo "AUTH_SERVICE_PORT=${{ secrets.AUTH_SERVICE_PORT }}" >> .env
+          echo "FRONTEND_PORT=${{ secrets.FRONTEND_PORT }}" >> .env
+          echo "GRAFANA_PORT=${{ secrets.GRAFANA_PORT }}" >> .env
+
+      - name: 생성한 .env 파일 EC2 서버로 복사
+        run: |
+          scp -i ~/.ssh/ec2.pem -o StrictHostKeyChecking=no .env \
+          ${{ secrets.DEV_EC2_HOST }}:${{ steps.vars.outputs.DEPLOY_DIR }}/.env
+
+      - name: EC2 서버에서 docker-compose를 사용해 배포
+        run: |
+          ssh -i ~/.ssh/ec2.pem -o StrictHostKeyChecking=no ${{ secrets.DEV_EC2_HOST }} << EOF
+            cd ${{ steps.vars.outputs.DEPLOY_DIR }}
+            docker compose pull    # 최신 이미지를 가져옴
+            docker compose up -d   # 컨테이너를 백그라운드로 실행
+          EOF
