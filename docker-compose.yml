@@ -5,12 +5,12 @@ services:
     ports:
       - "${APIGATEWAY_PORT}:8080"   # 외부 80 -> 내부 8080
     networks:
-      - mmb-network
+      - sample-network
     restart: no
     env_file:
       - .env
 
 networks:
-  mmb-network:
+  sample-network:
     external: true
     driver: bridge
