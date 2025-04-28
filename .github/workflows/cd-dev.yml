@@ -60,13 +60,14 @@ jobs:
         run: |
           echo "APIGATEWAY_PORT=${{ vars.APIGATEWAY_PORT }}" > .env
           echo "APIGATEWAY_NAME=${{ vars.APIGATEWAY_NAME }}" >> .env
+          echo "DOCKER_IMAGE=${{ vars.DOCKER_IMAGE }}" >> .env
           echo "JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}" >> .env
           echo "HOST_DOMAIN=${{ vars.HOST_DOMAIN }}" >> .env
           echo "QUESTION_SERVICE_PORT=${{ vars.QUESTION_SERVICE_PORT }}" >> .env
-          echo "MEMBER_SERVICE_PORT=${{ secrets.MEMBER_SERVICE_PORT }}" >> .env
-          echo "AUTH_SERVICE_PORT=${{ secrets.AUTH_SERVICE_PORT }}" >> .env
-          echo "FRONTEND_PORT=${{ secrets.FRONTEND_PORT }}" >> .env
-          echo "GRAFANA_PORT=${{ secrets.GRAFANA_PORT }}" >> .env
+          echo "MEMBER_SERVICE_PORT=${{ vars.MEMBER_SERVICE_PORT }}" >> .env
+          echo "AUTH_SERVICE_PORT=${{ vars.AUTH_SERVICE_PORT }}" >> .env
+          echo "FRONTEND_PORT=${{ vars.FRONTEND_PORT }}" >> .env
+          echo "GRAFANA_PORT=${{ vars.GRAFANA_PORT }}" >> .env
 
       - name: 생성한 .env 파일 EC2 서버로 복사
         run: |
