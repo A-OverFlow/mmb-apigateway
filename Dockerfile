@@ -4,6 +4,7 @@ WORKDIR /home/gradle/app
 
 # Gradle 설정 복사 및 실행 권한 부여
 COPY ./src/main/resources/*.yml ./
+COPY build.gradle settings.gradle ./
 #COPY gradle gradle
 
 # 종속성 캐시 생성
