@@ -14,3 +14,4 @@ networks:
   mumulbo-network:
     external: true
     driver: bridge
+    name: mumulbo-network
