@@ -1,13 +1,11 @@
 ### ✅ CI (build only)
-name: CI
+name: DEV CI
 
 on:
   pull_request:
-    branches: [ dev ]
-    paths:
-      - '**'
+    branches: [ develop ]
   push:
-    branches: [ dev ] 
+    branches: [ develop ]
 
 jobs:
   build:
