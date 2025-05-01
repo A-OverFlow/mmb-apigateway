@@ -9,6 +9,8 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.reactive.CorsWebFilter;
 import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
 
+import java.util.List;
+
 @Configuration
 public class CorsGlobalConfiguration {
 
@@ -28,7 +30,11 @@ public class CorsGlobalConfiguration {
     public CorsWebFilter corsWebFilter() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true); // 자격 증명 허용
-        config.addAllowedOrigin("http://localhost:5173"); // 프론트엔드 출처
+        config.setAllowedOrigins(List.of(
+                "http://localhost:5173", // 로컬 환경
+                "https://dev.mumulbo.com" // 개발 서버
+        ));
+
         config.addAllowedHeader("*");
         config.addAllowedMethod("*");
 
