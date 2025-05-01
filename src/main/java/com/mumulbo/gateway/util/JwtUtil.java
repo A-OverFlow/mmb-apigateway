@@ -13,7 +13,7 @@ public class JwtUtil {
     private String secret;
     public Claims validateToken(String token) {
         return Jwts.parserBuilder()
-                .setSigningKey(secret.getBytes(StandardCharsets.UTF_8))
+                .setSigningKey(secret)
                 .build()
                 .parseClaimsJws(token)
                 .getBody();

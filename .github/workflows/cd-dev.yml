@@ -4,9 +4,9 @@ on:
   pull_request:
     types: [closed]
     branches:
-      - dev
+      - develop
   push:
-    branches: [ dev ]
+    branches: [ develop ]
 
 jobs:
   deploy:
