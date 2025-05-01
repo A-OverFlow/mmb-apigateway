@@ -58,9 +58,11 @@ jobs:
 
       - name: 배포에 필요한 .env 파일 생성
         run: |
-          echo "APIGATEWAY_PORT=${{ vars.APIGATEWAY_PORT }}" > .env
+          > .env
+          echo "APIGATEWAY_PORT=${{ vars.APIGATEWAY_PORT }}" >> .env
           echo "APIGATEWAY_NAME=${{ vars.APIGATEWAY_NAME }}" >> .env
           echo "DOCKER_IMAGE=${{ vars.DOCKER_IMAGE }}" >> .env
+          echo "MMB_DOCKER_NETWORK=${{ vars.MMB_DOCKER_NETWORK }}" >> .env
           echo "JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}" >> .env
           echo "HOST_DOMAIN=${{ vars.HOST_DOMAIN }}" >> .env
           echo "QUESTION_SERVICE_PORT=${{ vars.QUESTION_SERVICE_PORT }}" >> .env
