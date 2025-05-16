@@ -43,6 +43,11 @@ spring:
           predicates:
             #- Host=${HOST_DOMAIN}
             - Path=/api/v1/auth/**, /api/v1/oauth2/**, /login/oauth2/**
+            
+        - id: mmb-chat-service
+          uri: http://mmb-chat-service:${CHAT_SERVICE_PORT}
+          predicates:
+            - Path=/chat/**, /ws/chat/**
 
 logging:
   level:
