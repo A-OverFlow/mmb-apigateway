@@ -64,6 +64,7 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
         return path.startsWith("/api/v1/auth/signup") ||
                 path.startsWith("/api/v1/auth/reissue") ||
                 path.startsWith("/api/v1/oauth2") ||
+                path.startsWith("/ws/chat") ||
                 path.startsWith("/login/oauth2/code") ||
                 path.startsWith("/grafana") ||
                 path.equals("/") ||
