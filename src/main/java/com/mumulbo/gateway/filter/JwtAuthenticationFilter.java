@@ -85,6 +85,7 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
                 path.startsWith("/api/v1/oauth2") ||
                 path.startsWith("/login/oauth2/code") ||
                 path.startsWith("/grafana") ||
+                path.startsWith("/ws/chat") ||
                 path.equals("/") ||
                 path.equals("/api/v1/questions") || // todo 로그인안해도 질문 리스트를 볼수 있어야 하니까. 정확하게 GET 요청만 허용하면 좋을텐데?
                 path.startsWith("/static") ||
