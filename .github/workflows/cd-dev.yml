@@ -70,6 +70,7 @@ jobs:
           echo "AUTH_SERVICE_PORT=${{ vars.AUTH_SERVICE_PORT }}" >> .env
           echo "FRONTEND_PORT=${{ vars.FRONTEND_PORT }}" >> .env
           echo "GRAFANA_PORT=${{ vars.GRAFANA_PORT }}" >> .env
+          echo "CHAT_SERVICE_PORT=${{ vars.CHAT_SERVICE_PORT }}" >> .env
 
       - name: 생성한 .env 파일 EC2 서버로 복사
         run: |
