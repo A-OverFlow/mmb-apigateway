@@ -48,16 +48,14 @@ spring:
           uri: http://mmb-chat-service:${CHAT_SERVICE_PORT:8084}
           predicates:
             #- Host=${HOST_DOMAIN}
-            - Path=/chat/**
-          filters:
-            - RewritePath=/chat/(?<segment>.*), /chat/${segment}
+            - Path=/api/v1/chat/**
 
         - id: mmb-chat-service-ws
           uri: ws://mmb-chat-service:${CHAT_SERVICE_PORT:8084}
           predicates:
-            - Path=/ws/chat, /ws/chat/**
+            - Path=/api/v1/ws/chat, /api/v1/ws/chat/**
           filters:
-            - RewritePath=/ws/chat(?<segment>/?.*), /ws/chat${segment}
+            - RewritePath=/api/v1/ws/chat(?<segment>/?.*), /ws/chat${segment}
 
 logging:
   level:
