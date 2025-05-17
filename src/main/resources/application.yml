@@ -53,7 +53,7 @@ spring:
             - RewritePath=/chat/(?<segment>.*), /chat/${segment}
 
         - id: mmb-chat-service-ws
-          uri: http://mmb-chat-service:${CHAT_SERVICE_PORT:8084}
+          uri: ws://mmb-chat-service:${CHAT_SERVICE_PORT:8084}
           predicates:
             - Path=/ws/chat, /ws/chat/**
           filters:
