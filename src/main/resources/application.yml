@@ -19,13 +19,6 @@ spring:
     gateway:
       preserveHostHeader: false
       routes:
-        - id: mmb-grafana
-          uri: http://mmb-grafana:${GRAFANA_PORT:3000}/login
-          predicates:
-            - Path=/grafana/**
-          filters:
-            - RewritePath=/grafana/(?<segment>.*), /${segment}
-
         - id: mmb-question-service
           uri: http://mmb-question-service:${QUESTION_SERVICE_PORT:8083}     # container name (mmb-question-service)
           predicates:
