@@ -11,13 +11,23 @@ spring:
     name: ${APIGATEWAY_NAME:mmb-apigateway}
   main:
     web-application-type: reactive
+  data:
+    redis:
+      host: ${REDIS_HOST:redis-ratelimit}
+      port: ${REDIS_PORT:6381}
   cloud:
     discovery:
       enabled: false
     config:
       enabled: false
     gateway:
-      preserveHostHeader: false
+      #preserveHostHeader: false
+      default-filters:
+        - name: RequestRateLimiter
+          args:
+            redis-rate-limiter.replenishRate: 10
+            redis-rate-limiter.burstCapacity: 20
+            key-resolver: "#{@customKeyResolver}"
       routes:
         - id: mmb-question-service
           uri: http://mmb-question-service:${QUESTION_SERVICE_PORT:8083}     # container name (mmb-question-service)
