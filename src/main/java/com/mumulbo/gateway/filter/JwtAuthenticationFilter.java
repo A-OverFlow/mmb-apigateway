@@ -1,5 +1,6 @@
 package com.mumulbo.gateway.filter;
 
+import com.mumulbo.gateway.dto.AuthResponse;
 import com.mumulbo.gateway.util.JwtUtil;
 import io.jsonwebtoken.Claims;
 import org.slf4j.Logger;
@@ -11,6 +12,7 @@ import org.springframework.core.Ordered;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
+import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
@@ -20,20 +22,21 @@ import java.util.List;
 public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
 
     private final JwtUtil jwtUtil;
-
+    WebClient webClient;
     private final Logger log = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
 
     @Autowired
-    public JwtAuthenticationFilter(JwtUtil jwtUtil) {
+    public JwtAuthenticationFilter(JwtUtil jwtUtil, WebClient.Builder webClientBuilder) {
         this.jwtUtil = jwtUtil;
+        this.webClient = webClientBuilder.build();
     }
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
-        String path = exchange.getRequest().getPath().toString();
+        String path = exchange.getRequest().getPath().value();
 
         // 필터 제외
-        if (isPublicPath(path)) {
+        if (isPublicPath(path, exchange)) {
             log.debug("필터 제외");
             return chain.filter(exchange);
         }
@@ -55,40 +58,45 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
             return exchange.getResponse().setComplete();
         }
 
+        // 토큰 검증
         String token = authHeader.substring(7);
+        return webClient.get()
+                .uri("http://mmb-auth-service:8081/api/v1/auth/validate")
+                .header(HttpHeaders.AUTHORIZATION, token) // No Bearer
+                .retrieve()
+                .bodyToMono(AuthResponse.class)
+                .flatMap(authResponse -> {
+                    // valid
+                    if (!authResponse.isValid()) {
+                        log.error("유효하지 않은 토큰: {}", authResponse.getMessage());
+                        exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+                        return exchange.getResponse().setComplete();
+                    }
+                    // id
+                    ServerWebExchange finalExchange = exchange.mutate()
+                            .request(builder -> builder.header("X-User-Id", authResponse.getId()))
+                            .build();
 
-        try {
-            // todo : 직접 JWT 검증하는 게 아니라 auth api 호출해서 검증해야 함
-            //  JWT_SECRET_KEY 를 직접 관리할 필요 없음. auth 만 알고 있으면 됨
-            //  x-user-id로 설정한 값을 auth api의 응답으로 받으면 됨
-            Claims claims = jwtUtil.validateToken(token);
-            String userId = claims.getSubject(); // sub 값 추출
-
-            // 기존 요청에 헤더 추가 (mutate 사용)
-            ServerWebExchange modifiedExchange = exchange.mutate()
-                    .request(builder -> builder.header("X-User-Id", userId))
-                    .build();
-
-            log.debug("set x-user-id : {}", userId);
-            return chain.filter(modifiedExchange);
-
-        } catch (Exception e) {
-            log.error(e.toString());
-            exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-            return exchange.getResponse().setComplete();
-        }
+                    log.debug("토큰 인증 성공 - X-User-Id: {}", authResponse.getId());
+                    return chain.filter(finalExchange);
+                })
+                .onErrorResume(e -> {
+                    log.error("Auth API 호출 실패: {}", e.toString());
+                    exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+                    return exchange.getResponse().setComplete();
+                });
     }
 
-    private boolean isPublicPath(String path) {
+    private boolean isPublicPath(String path, ServerWebExchange exchange) {
+        String method = exchange.getRequest().getMethod().name();
         return path.startsWith("/api/v1/auth/signup") ||
                 path.startsWith("/api/v1/auth/reissue") ||
                 path.startsWith("/api/v1/oauth2") ||
                 path.startsWith("/login/oauth2/code") ||
-                path.startsWith("/grafana") ||
                 path.startsWith("/api/v1/chat") ||
                 path.startsWith("/ws/chat") ||
                 path.equals("/") ||
-                path.equals("/api/v1/questions") || // todo 로그인안해도 질문 리스트를 볼수 있어야 하니까. 정확하게 GET 요청만 허용하면 좋을텐데?
+                (path.equals("/api/v1/questions") && method.equalsIgnoreCase("GET")) ||
                 path.startsWith("/static") ||
                 path.endsWith(".js") ||
                 path.endsWith(".css") ||
