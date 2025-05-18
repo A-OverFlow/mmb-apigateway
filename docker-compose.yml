@@ -9,6 +9,11 @@ services:
     networks:
       - mumulbo-network
     restart: no
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
 
 networks:
   mumulbo-network:
