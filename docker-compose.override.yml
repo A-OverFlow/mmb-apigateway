@@ -5,3 +5,5 @@ services:
       context: ./
     image:  mumulbo/mmb-apigateway:local
     container_name: mmb-apigateway
+    ports:
+      - "80:${APIGATEWAY_PORT}"   # 외부 8080 -> 내부 8080
