@@ -73,7 +73,7 @@ jobs:
 
       - name: docker-compose.yml 파일 EC2 서버로 복사
         run: |
-          scp -i ~/.ssh/ec2.pem -o StrictHostKeyChecking=no docker-compose.yml \
+          scp -i ~/.ssh/ec2.pem -o StrictHostKeyChecking=no docker-compose.generated.yml \
           ${{ secrets.DEV_EC2_HOST }}:${{ steps.vars.outputs.DEPLOY_DIR }}/docker-compose.yml
 
       - name: 배포에 필요한 .env 파일 생성
