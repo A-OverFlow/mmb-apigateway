@@ -1,6 +1,6 @@
 services:
   api-gateway:
-    image: ${DOCKER_IMAGE}:dev
+    image: ${DOCKER_IMAGE}:IMAGE_TAG_PLACEHOLDER
     container_name: mmb-apigateway
     ports:
       - "${APIGATEWAY_PORT}:${APIGATEWAY_PORT}"   # 외부 8080 -> 내부 8080
