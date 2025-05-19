@@ -62,7 +62,7 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
         String token = authHeader.substring(7);
         return webClient.get()
                 .uri("http://mmb-auth-service:8081/api/v1/auth/validate")
-                .header(HttpHeaders.AUTHORIZATION, token) // No Bearer
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
                 .retrieve()
                 .bodyToMono(AuthResponse.class)
                 .flatMap(authResponse -> {
