@@ -117,6 +117,7 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
                 (path.matches("^/api/v1/questions/[^/]+/answers$") && method.equalsIgnoreCase("GET")) ||
                 (path.equals("/api/v1/members/count") && method.equalsIgnoreCase("GET")) ||
                 (path.equals("/api/v1/chat/messages") && method.equalsIgnoreCase("GET")) ||
+                (path.equals("/api/v1/questions/count") && method.equalsIgnoreCase("GET")) ||
                 path.startsWith("/static") ||
                 path.endsWith(".js") ||
                 path.endsWith(".css") ||
