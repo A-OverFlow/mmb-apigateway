@@ -29,6 +29,12 @@ spring:
             redis-rate-limiter.burstCapacity: 20
             key-resolver: "#{@customKeyResolver}"
       routes:
+        - id: mmb-answer-service
+          uri: http://mmb-answer-service:${ANSWER_SERVICE_PORT:8086}     # container name (mmb-answer-service)
+          predicates:
+            #- Host=${HOST_DOMAIN}
+            - Path=/api/v1/answers, /api/v1/answers/**, /api/v1/questions/*/answers
+
         - id: mmb-question-service
           uri: http://mmb-question-service:${QUESTION_SERVICE_PORT:8083}     # container name (mmb-question-service)
           predicates:

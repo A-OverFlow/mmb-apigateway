@@ -3,6 +3,7 @@ package com.mumulbo.gateway.filter;
 import com.mumulbo.gateway.dto.AuthResponse;
 import com.mumulbo.gateway.util.JwtUtil;
 import io.jsonwebtoken.Claims;
+import java.net.URI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.server.ServerWebExchange;
+import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
@@ -61,30 +63,46 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
         // 토큰 검증
         String token = authHeader.substring(7);
         return webClient.get()
-                .uri("http://mmb-auth-service:8081/api/v1/auth/validate")
-                .header(HttpHeaders.AUTHORIZATION, token) // No Bearer
-                .retrieve()
-                .bodyToMono(AuthResponse.class)
-                .flatMap(authResponse -> {
-                    // valid
-                    if (!authResponse.isValid()) {
-                        log.error("유효하지 않은 토큰: {}", authResponse.getMessage());
-                        exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-                        return exchange.getResponse().setComplete();
-                    }
-                    // id
-                    ServerWebExchange finalExchange = exchange.mutate()
-                            .request(builder -> builder.header("X-User-Id", authResponse.getId()))
-                            .build();
-
-                    log.debug("토큰 인증 성공 - X-User-Id: {}", authResponse.getId());
-                    return chain.filter(finalExchange);
-                })
-                .onErrorResume(e -> {
-                    log.error("Auth API 호출 실패: {}", e.toString());
+            .uri("http://mmb-auth-service:8081/api/v1/auth/validate")
+            .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+            .retrieve()
+            .bodyToMono(AuthResponse.class)
+            .flatMap(authResponse -> {
+                // valid
+                if (!authResponse.isValid()) {
+                    log.error("유효하지 않은 토큰: {}", authResponse.getMessage());
                     exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
                     return exchange.getResponse().setComplete();
-                });
+                }
+
+                String path2 = exchange.getRequest().getPath().value();
+                if (path2.startsWith("/ws/chat")) {
+                    URI newUri = UriComponentsBuilder.fromUri(exchange.getRequest().getURI())
+                        .queryParam("userId", authResponse.getId())
+                        .build(true)
+                        .toUri();
+
+                    ServerWebExchange mutatedExchange = exchange.mutate()
+                        .request(exchange.getRequest().mutate().uri(newUri).build())
+                        .build();
+
+                    log.debug("WebSocket 요청 - userId 쿼리파라미터 추가됨: {}", authResponse.getId());
+                    return chain.filter(mutatedExchange);
+                } else {
+                    ServerWebExchange finalExchange = exchange.mutate()
+                        .request(builder -> builder.header("X-User-Id", authResponse.getId()))
+                        .build();
+
+                    log.debug("HTTP 요청 - X-User-Id 헤더 추가됨: {}", authResponse.getId());
+                    return chain.filter(finalExchange);
+                }
+            })
+            .onErrorResume(e -> {
+                log.error("Auth API 호출 실패: {}", e.toString());
+                exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+                return exchange.getResponse().setComplete();
+            });
+
     }
 
     private boolean isPublicPath(String path, ServerWebExchange exchange) {
@@ -93,10 +111,13 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
                 path.startsWith("/api/v1/auth/reissue") ||
                 path.startsWith("/api/v1/oauth2") ||
                 path.startsWith("/login/oauth2/code") ||
-                path.startsWith("/api/v1/chat") ||
-                path.startsWith("/ws/chat") ||
                 path.equals("/") ||
                 (path.equals("/api/v1/questions") && method.equalsIgnoreCase("GET")) ||
+                (path.startsWith("/api/v1/answers") && method.equalsIgnoreCase("GET")) ||
+                (path.matches("^/api/v1/questions/[^/]+/answers$") && method.equalsIgnoreCase("GET")) ||
+                (path.equals("/api/v1/members/count") && method.equalsIgnoreCase("GET")) ||
+                (path.equals("/api/v1/chat/messages") && method.equalsIgnoreCase("GET")) ||
+                (path.equals("/api/v1/questions/count") && method.equalsIgnoreCase("GET")) ||
                 path.startsWith("/static") ||
                 path.endsWith(".js") ||
                 path.endsWith(".css") ||
