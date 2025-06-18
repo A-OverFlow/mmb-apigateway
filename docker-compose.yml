@@ -8,24 +8,12 @@ services:
       - .env
     networks:
       - mumulbo-network
-    depends_on:
-      - redis-ratelimit
     restart: no
     logging:
       driver: json-file
       options:
         max-size: "10m"
         max-file: "5"
-  redis-ratelimit:
-    image: redis:7
-    container_name: ${APIGATEWAY_NAME}-redis
-    ports:
-      - "${REDIS_PORT}:${REDIS_PORT}"
-    command: ["redis-server", "--port", "6381"]
-    env_file:
-      - .env
-    networks:
-      - mumulbo-network
 
 networks:
   mumulbo-network:
