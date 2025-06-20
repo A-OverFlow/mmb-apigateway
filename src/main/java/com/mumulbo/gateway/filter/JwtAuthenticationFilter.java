@@ -106,7 +106,8 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
                         .request(exchange.getRequest().mutate().uri(newUri).build())
                         .build();
 
-                    log.debug("WebSocket 요청 - userId 쿼리파라미터 추가됨: {}", authResponse.getId());
+                    log.debug("📤 chat 서비스에 전달할 최종 URI: {}", newUri);
+                    log.debug("📤 WebSocket 요청 - userId 쿼리파라미터 추가됨: {}", authResponse.getId());
                     return chain.filter(mutatedExchange);
                 } else {
                     // 일반 요청: X-User-Id 헤더 추가
