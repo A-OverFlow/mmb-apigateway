@@ -32,7 +32,7 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
         this.jwtUtil = jwtUtil;
         this.webClient = webClientBuilder.build();
     }
-
+    
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         String path = exchange.getRequest().getPath().value();
@@ -52,33 +52,16 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
             }
         }
 
-        // chat 서비스 및 토큰 확인
-        boolean isChatRequest = path.startsWith("/ws/chat");
-        String token;
-
-        if (isChatRequest) {
-            // chat 서비스 요청) QueryParams에서 token 추출
-            token = exchange.getRequest().getQueryParams().getFirst("token");
-            if (token == null || token.isBlank()) {
-                log.warn("❌ chat 요청에 token 쿼리 누락");
-                exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-                return exchange.getResponse().setComplete();
-            }
-            log.debug("chat 요청");
-        } else {
-            // 일반 서비스 요청) Authorization 헤더에서 token 추출
-            String authHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
-            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-                log.debug("토큰 확인. authHeader : {}", authHeader);
-                exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-                return exchange.getResponse().setComplete();
-            }
-            token = authHeader.substring(7);
+        // 토큰 확인
+        String authHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            log.debug("토큰 확인. authHeader : {}", authHeader);
+            exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+            return exchange.getResponse().setComplete();
         }
 
-        log.debug("✅ TOKEN : " + token);
-
-        // 토큰 검증 (auth 서비스 호출)
+        // 토큰 검증
+        String token = authHeader.substring(7);
         return webClient.get()
             .uri("http://mmb-auth-service:8081/api/v1/auth/validate")
             .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
@@ -94,10 +77,8 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
 
                 String path2 = exchange.getRequest().getPath().value();
                 if (path2.startsWith("/ws/chat")) {
-                    // chat 서비스 요청 : token 쿼리 유지 + userId 쿼리 추가
+                    // chat 서비스 요청 : userId 쿼리 추가
                     URI newUri = UriComponentsBuilder.fromUri(exchange.getRequest().getURI())
-                        .replaceQueryParams(exchange.getRequest().getQueryParams())
-                        .queryParam("token", token)
                         .queryParam("userId", authResponse.getId())
                         .build(true)
                         .toUri();
@@ -105,7 +86,6 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
                     ServerWebExchange mutatedExchange = exchange.mutate()
                         .request(exchange.getRequest().mutate().uri(newUri).build())
                         .build();
-
                     log.debug("📤 chat 서비스에 전달할 최종 URI: {}", newUri);
                     log.debug("📤 WebSocket 요청 - userId 쿼리파라미터 추가됨: {}", authResponse.getId());
                     return chain.filter(mutatedExchange);
