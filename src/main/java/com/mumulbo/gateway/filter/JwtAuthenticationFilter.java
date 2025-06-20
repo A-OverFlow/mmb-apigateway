@@ -39,7 +39,7 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
 
         // 필터 제외
         if (isPublicPath(path, exchange)) {
-            log.debug("필터 제외");
+            log.debug("🔓 공개 경로 요청: {}", path);
             return chain.filter(exchange);
         }
 
@@ -52,16 +52,31 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
             }
         }
 
-        // 토큰 확인
-        String authHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            log.debug("토큰 확인. authHeader : {}", authHeader);
-            exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-            return exchange.getResponse().setComplete();
+        // chat 서비스 및 토큰 확인
+        boolean isChatRequest = path.startsWith("/ws/chat");
+        String token;
+
+        if (isChatRequest) {
+            // chat 서비스 요청) QueryParams에서 token 추출
+            token = exchange.getRequest().getQueryParams().getFirst("token");
+            if (token == null || token.isBlank()) {
+                log.warn("❌ chat 요청에 token 쿼리 누락");
+                exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+                return exchange.getResponse().setComplete();
+            }
+            log.debug("chat 요청");
+        } else {
+            // 일반 서비스 요청) Authorization 헤더에서 token 추출
+            String authHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                log.debug("토큰 확인. authHeader : {}", authHeader);
+                exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+                return exchange.getResponse().setComplete();
+            }
+            token = authHeader.substring(7);
         }
 
-        // 토큰 검증
-        String token = authHeader.substring(7);
+        // 토큰 검증 (auth 서비스 호출)
         return webClient.get()
             .uri("http://mmb-auth-service:8081/api/v1/auth/validate")
             .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
@@ -75,9 +90,12 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
                     return exchange.getResponse().setComplete();
                 }
 
-                String path2 = exchange.getRequest().getPath().value();
-                if (path2.startsWith("/ws/chat")) {
-                    URI newUri = UriComponentsBuilder.fromUri(exchange.getRequest().getURI())
+                if (isChatRequest) {
+                    // chat 서비스 요청 : token 쿼리 유지 + userId 쿼리 추가
+                    URI newUri = UriComponentsBuilder
+                        .fromUri(exchange.getRequest().getURI())
+                        .replaceQueryParams(exchange.getRequest().getQueryParams())
+                        .queryParam("token", token)
                         .queryParam("userId", authResponse.getId())
                         .build(true)
                         .toUri();
@@ -89,6 +107,7 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
                     log.debug("WebSocket 요청 - userId 쿼리파라미터 추가됨: {}", authResponse.getId());
                     return chain.filter(mutatedExchange);
                 } else {
+                    // 일반 요청: X-User-Id 헤더 추가
                     ServerWebExchange finalExchange = exchange.mutate()
                         .request(builder -> builder.header("X-User-Id", authResponse.getId()))
                         .build();
@@ -98,7 +117,7 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
                 }
             })
             .onErrorResume(e -> {
-                log.error("Auth API 호출 실패: {}", e.toString());
+                log.error("❌ Auth 서비스 호출 실패: {}", e.toString());
                 exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
                 return exchange.getResponse().setComplete();
             });
@@ -112,7 +131,7 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
                 path.startsWith("/api/v1/oauth2") ||
                 path.startsWith("/login/oauth2/code") ||
                 path.equals("/") ||
-                (path.equals("/api/v1/questions") && method.equalsIgnoreCase("GET")) ||
+                (path.startsWith("/api/v1/questions") && method.equalsIgnoreCase("GET")) ||
                 (path.startsWith("/api/v1/answers") && method.equalsIgnoreCase("GET")) ||
                 (path.matches("^/api/v1/questions/[^/]+/answers$") && method.equalsIgnoreCase("GET")) ||
                 (path.equals("/api/v1/members/count") && method.equalsIgnoreCase("GET")) ||
