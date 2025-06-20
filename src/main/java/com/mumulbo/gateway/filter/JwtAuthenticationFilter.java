@@ -76,6 +76,8 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
             token = authHeader.substring(7);
         }
 
+        log.debug("✅ TOKEN : " + token);
+
         // 토큰 검증 (auth 서비스 호출)
         return webClient.get()
             .uri("http://mmb-auth-service:8081/api/v1/auth/validate")
@@ -90,10 +92,10 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
                     return exchange.getResponse().setComplete();
                 }
 
-                if (isChatRequest) {
+                String path2 = exchange.getRequest().getPath().value();
+                if (path2.startsWith("/ws/chat")) {
                     // chat 서비스 요청 : token 쿼리 유지 + userId 쿼리 추가
-                    URI newUri = UriComponentsBuilder
-                        .fromUri(exchange.getRequest().getURI())
+                    URI newUri = UriComponentsBuilder.fromUri(exchange.getRequest().getURI())
                         .replaceQueryParams(exchange.getRequest().getQueryParams())
                         .queryParam("token", token)
                         .queryParam("userId", authResponse.getId())
