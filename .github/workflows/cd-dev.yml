@@ -93,6 +93,9 @@ jobs:
           echo "CHAT_SERVICE_PORT=${{ vars.CHAT_SERVICE_PORT }}" >> .env
           echo "ANSWER_SERVICE_PORT=${{ vars.ANSWER_SERVICE_PORT }}" >> .env
           echo "REDIS_PORT=${{ vars.REDIS_PORT }}" >> .env
+          echo "ZIPKIN_NAME=${{ vars.ZIPKIN_NAME }}" >> .env
+          echo "ZIPKIN_HOST=${{ vars.ZIPKIN_HOST }}" >> .env
+          echo "CONTAINER_ZIPKIN_PORT=${{ vars.CONTAINER_ZIPKIN_PORT }}" >> .env
 
       - name: 생성한 .env 파일 EC2 서버로 복사
         run: |
