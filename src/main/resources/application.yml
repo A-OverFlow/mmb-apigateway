@@ -77,7 +77,7 @@ spring:
           predicates:
             - Path=/api/v1/ws/notification, /api/v1/ws/notification/**
           filters:
-            - RewritePath=/api/v1/ws/notification(?<segment>/?.*), /ws/notification{segment}
+            - RewritePath=/api/v1/ws/notification(?<segment>/?.*), /ws/notification${segment}
 
 logging:
   level:
