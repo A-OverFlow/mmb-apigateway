@@ -12,10 +12,10 @@ services:
       - redis-ratelimit
     restart: no
     logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "5"
+        driver: fluentd
+        options:
+            fluentd-address: localhost:24224
+            tag: mmb-apigateway
   redis-ratelimit:
     image: redis:7
     container_name: ${APIGATEWAY_NAME}-redis
