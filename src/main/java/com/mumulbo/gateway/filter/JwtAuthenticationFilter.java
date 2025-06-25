@@ -53,10 +53,10 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
         }
 
         // chat 서비스 및 토큰 확인
-        boolean isChatRequest = path.startsWith("/ws/chat");
+        boolean isChatOrNotificationRequest = path.startsWith("/ws/chat") || path.startsWith("/ws/notification");
         String token;
 
-        if (isChatRequest) {
+        if (isChatOrNotificationRequest) {
             // chat 서비스 요청) QueryParams에서 token 추출
             token = exchange.getRequest().getQueryParams().getFirst("token");
             if (token == null || token.isBlank()) {
@@ -64,7 +64,7 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
                 exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
                 return exchange.getResponse().setComplete();
             }
-            log.debug("📤 chat 요청");
+            log.debug("📤 chat|notification 요청");
         } else {
             // 일반 서비스 요청) Authorization 헤더에서 token 추출
             String authHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
@@ -91,7 +91,7 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
                 }
 
                 String path2 = exchange.getRequest().getPath().value();
-                if (path2.startsWith("/ws/chat")) {
+                if (path2.startsWith("/ws/chat") || path2.startsWith("/ws/notification")) {
                     // chat 서비스 요청 : userId 쿼리 추가
                     URI newUri = UriComponentsBuilder.fromUri(exchange.getRequest().getURI())
                         .queryParam("userId", authResponse.getId())

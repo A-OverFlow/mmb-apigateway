@@ -66,6 +66,19 @@ spring:
           filters:
             - RewritePath=/api/v1/ws/chat(?<segment>/?.*), /ws/chat${segment}
 
+        - id: mmb-notification-service
+          uri: http://mmb-notification-service:${NOTIFICATION_SERVICE_PORT:8087}
+          predicates:
+            #- Host=${HOST_DOMAIN}
+            - Path=/api/v1/notification/**
+
+        - id: mmb-notification-service-ws
+          uri: ws://mmb-notification-service:${NOTIFICATION_SERVICE_PORT:8087}
+          predicates:
+            - Path=/api/v1/ws/notification, /api/v1/ws/notification/**
+          filters:
+            - RewritePath=/api/v1/ws/notification(?<segment>/?.*), /ws/notification{segment}
+
 logging:
   level:
     com.mumulbo.gateway: debug
