@@ -2,6 +2,8 @@ package com.mumulbo.gateway.filter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
@@ -14,20 +16,27 @@ import java.net.URI;
 
 @Component
 public class PostRoutingLoggingFilter implements GlobalFilter, Ordered {
+  @Value("${spring.application.name:mmb-apigateway}")
+  private String applicationName;
 
   private final Logger log = LoggerFactory.getLogger(PostRoutingLoggingFilter.class);
 
   @Override
   public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
-    log.debug("🟡 [PostRoutingLoggingFilter] 필터 호출됨");
+    return Mono.deferContextual(context -> {
+          MDC.put("APPLICATION_NAME", applicationName);
 
-    return chain.filter(exchange)
-        .doOnError(e -> {
-          log.error("❌ 라우팅 중 오류 발생", e);
-          printRoutingLog(exchange, e);
-        })
-        .doOnSuccess(v -> {
-          printRoutingLog(exchange, null);
+          log.debug("🟡 [PostRoutingLoggingFilter] 필터 호출됨");
+
+          return chain.filter(exchange)
+              .doOnError(e -> {
+                  log.error("❌ 라우팅 중 오류 발생", e);
+                  printRoutingLog(exchange, e);
+              })
+              .doOnSuccess(v -> {
+                  printRoutingLog(exchange, null);
+              })
+            .doFinally(signalType -> MDC.remove("APPLICATION_NAME"));
         });
   }
 
